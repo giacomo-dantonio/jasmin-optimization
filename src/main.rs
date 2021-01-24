@@ -1,34 +1,41 @@
+use core::f64;
+
 use jasmin_optimization::linesearch::backtracking::Backtracking;
-use nalgebra::{Matrix3, Vector3};
+use jasmin_optimization::functions::quadratic::Quadratic;
+use nalgebra::{DMatrix, DVector};
 use argmin::prelude::*;
 
+// TODO
+// - make LineSearchFunc generic with bounded trait ArgminOp instead of Quadratic
+// - move it to a separate module
+// - move the content of the main to a test
 struct LineSearchFunc {
-    mat_q: Matrix3<f64>,
-    b: Vector3<f64>,
-    c: f64,
-    x: Vector3<f64>,
-    gradient: Vector3<f64>,
+    func: Quadratic,
+    x: DVector<f64>,
+    gradient: DVector<f64>,
 }
 
 impl LineSearchFunc {
     pub fn new(
-        q: Matrix3<f64>,
-        b: Vector3<f64>,
+        q: DMatrix<f64>,
+        b: DVector<f64>,
         c: f64,
-        x: Vector3<f64>,
+        x: DVector<f64>,
     ) -> Self {
+        let func
+            = Quadratic::new(q, b, c);
+        let gradient
+            = func.gradient_at(&x);
+
         LineSearchFunc {
-            mat_q: q,
-            b,
-            c,
+            func,
             x,
-            gradient: &q * x + b
+            gradient
         }
     }
 
-    pub fn at(&self, at: &Vector3<f64>) -> f64 {
-        0.5 * ((&self.mat_q * at).transpose() * at + &self.b.transpose() * at)[(0,0)]
-        + self.c
+    pub fn at(&self, x: &DVector<f64>) -> f64 {
+        self.func.evaluate_at(x)
     }
 }
 
@@ -39,31 +46,31 @@ impl ArgminOp for LineSearchFunc {
     type Jacobian = ();
     type Float = f64;
 
-    fn apply(&self, _param: &Self::Param) -> Result<Self::Output, Error> {
+    fn apply(&self, param: &Self::Param) -> Result<Self::Output, Error> {
         let x_next
-            = &self.x - *_param * self.gradient;
-        Ok(self.at(&x_next))
+            = &self.x - *param * &self.gradient;
+        Ok(self.func.evaluate_at(&x_next))
     }
 }
 
 fn main() -> Result<(), Error>{
     let cost = LineSearchFunc::new(
-        Matrix3::new(
+        DMatrix::from_row_slice(3, 3, &[
             2f64, 1f64, 0f64,
             1f64, 2f64, 0f64,
             0f64, 0f64, 1f64
-        ),
-        Vector3::new(0.0, 1.0, 2.0),
+        ]),
+        DVector::from_row_slice(&[0.0, 1.0, 2.0]),
      0.0,
-     Vector3::new(1.0, 1.5, -0.5)
+     DVector::from_row_slice(&[1.0, 1.5, -0.5])
     );
 
     let solver = Backtracking::new(
         cost.at(&cost.x),
         0.7,
         1E-4,
-        cost.gradient,
-        -cost.gradient,
+        cost.gradient.clone(),
+        -cost.gradient.clone(),
     );
 
     let res = Executor::new(

@@ -8,5 +8,6 @@ edition = "2018"
 
 [dependencies]
 argmin = { features = ["ctrlc", "nalgebral"], path = "../argmin" }
-nalgebra = "0.22"
+nalgebra = { version = "0.22", features = ["serde-serialize"] }
 serde = "1.0"
+rand = "0.8"
