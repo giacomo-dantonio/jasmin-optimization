@@ -98,12 +98,9 @@ mod tests {
             0.0,
         );
     
-        let x
-            = DVector::from_row_slice(&[1.0, 1.5, -0.5]);
-        let cost
-            = LineSearchFunc::new(func.clone(), x.clone()).unwrap();
-        let gradient
-            = func.gradient_at(&x);
+        let x = DVector::from_row_slice(&[1.0, 1.5, -0.5]);
+        let cost = LineSearchFunc::new(func.clone(), x.clone()).unwrap();
+        let gradient = func.gradient_at(&x);
         let value = func.evaluate_at(&x);
     
         let solver = Backtracking::new(
