@@ -3,6 +3,7 @@ use argmin::prelude::*;
 
 /// Multivariate quadratic function of the form
 /// 0.5 x^T Q x + b^T x + c
+#[derive(Clone)]
 pub struct Quadratic {
     mat_q: DMatrix<f64>,
     b: DVector<f64>,
