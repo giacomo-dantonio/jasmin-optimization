@@ -2,21 +2,20 @@ use argmin::prelude::*;
 
 pub mod backtracking;
 
-pub struct LineSearchFunc<O>
+pub struct LineSearchFunc<'a, O>
 where
     O : ArgminOp
 {
-    func: O,
-    descent_dir: O::Param,
-    x: O::Param,
+    func: &'a O,
+    descent_dir: &'a O::Param,
+    x: &'a O::Param,
 }
 
-impl<O> LineSearchFunc<O>
+impl<'a, O> LineSearchFunc<'a, O>
 where
     O : ArgminOp
 {
-    // FIXME: avoid cloning the cost function and the parameter
-    pub fn new(func: O, descent_dir: O::Param, x: O::Param) -> Result<Self, Error> {
+    pub fn new(func: &'a O, descent_dir: &'a O::Param, x: &'a O::Param) -> Result<Self, Error> {
         Ok(LineSearchFunc {
             func,
             descent_dir,
@@ -25,7 +24,7 @@ where
     }
 }
 
-impl<O> ArgminOp for LineSearchFunc<O>
+impl<'a, O> ArgminOp for LineSearchFunc<'a, O>
 where
     O : ArgminOp,
     O::Output : ArgminFloat,

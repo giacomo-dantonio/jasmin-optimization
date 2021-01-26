@@ -23,8 +23,8 @@ where
         function_value: F,
         contraction_factor: F,
         c: F,
-        gradient: Param,
-        descent_dir: Param) -> Self
+        gradient: &Param,
+        descent_dir: &Param) -> Self
     where
         Param : ArgminDot<Param, F>
     {
@@ -99,18 +99,20 @@ mod tests {
         );
     
         let x = DVector::from_row_slice(&[1.0, 1.5, -0.5]);
-        let cost = LineSearchFunc::new(func.clone(), x.clone()).unwrap();
         let gradient = func.gradient_at(&x);
         let value = func.evaluate_at(&x);
+        let descent_dir = gradient.mul(&(-1.0));
+
+        let cost = LineSearchFunc::new(&func, &descent_dir, &x).unwrap();
     
         let solver = Backtracking::new(
             value,
             0.7,
             1E-4,
-            gradient.clone(),
-            -gradient.clone(),
+            &gradient,
+            &descent_dir,
         );
-    
+
         let res = Executor::new(
             cost,
             solver,

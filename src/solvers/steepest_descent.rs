@@ -54,17 +54,15 @@ where
 
         let descent_dir = gradient.mul(&F::from_f64(-1.0).unwrap());
 
-        let line_cost_func = LineSearchFunc::new(
-            op.clone(), descent_dir.clone(), param.clone())?;
+        let line_cost_func = LineSearchFunc::new(op, &descent_dir, &param)?;
 
         // FIXME: avoid magic numbers.
-        // FIXME: avoid cloning
         let linesearch = Backtracking::<F>::new::<O::Param>(
             state.cost,
             F::from_f64(0.7).unwrap(),
             F::from_f64(1E-4).unwrap(),
-            gradient.clone(),
-            descent_dir.clone(),
+            gradient,
+            &descent_dir,
         );
 
         // FIXME: use a smart strategy for computing the initial step length.
