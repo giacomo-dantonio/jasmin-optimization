@@ -61,7 +61,11 @@ where
         let hessian = state.hessian
             .as_ref()
             .ok_or(Error::msg("hessian unavailable"))?;
-        let descent_dir = hessian.dot(gradient).mul(&F::from_f64(-1.0).unwrap());
+        // FIXME: avoid inverting the hessian, solve the linear system instead.
+        let descent_dir = hessian
+            .inv()?
+            .dot(gradient)
+            .mul(&F::from_f64(-1.0).unwrap());
 
         let line_cost_func = LineFunc::new(op, &descent_dir, &param)?;
 

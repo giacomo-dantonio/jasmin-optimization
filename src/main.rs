@@ -23,8 +23,8 @@ fn main() {
         0.0,
     );
 
-    let solver = SteepestDescent::new();
-    // let solver = Newton::new();
+    // let solver = SteepestDescent::new();
+    let solver = Newton::new();
     let res = Executor::new(
         cost,
         solver,
