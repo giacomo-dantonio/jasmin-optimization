@@ -1,7 +1,7 @@
 use argmin::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::linesearch::{LineSearchFunc, backtracking::Backtracking};
+use crate::steplength::{LineFunc, backtracking::Backtracking};
 
 #[derive(Serialize, Deserialize)]
 pub struct Newton {
@@ -63,7 +63,7 @@ where
             .ok_or(Error::msg("hessian unavailable"))?;
         let descent_dir = hessian.dot(gradient).mul(&F::from_f64(-1.0).unwrap());
 
-        let line_cost_func = LineSearchFunc::new(op, &descent_dir, &param)?;
+        let line_cost_func = LineFunc::new(op, &descent_dir, &param)?;
 
         // FIXME: avoid magic numbers.
         let linesearch = Backtracking::<F>::new::<O::Param>(

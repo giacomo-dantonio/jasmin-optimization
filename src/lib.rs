@@ -1,3 +1,3 @@
 pub mod functions;
-pub mod linesearch;
+pub mod steplength;
 pub mod solvers;

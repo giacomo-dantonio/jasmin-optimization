@@ -84,7 +84,7 @@ mod tests {
     use super::*;
     use nalgebra::{DMatrix, DVector};
     use crate::functions::quadratic::Quadratic;
-    use crate::linesearch::LineSearchFunc;
+    use crate::steplength::LineFunc;
 
     #[test]
     fn test_quadratic() {
@@ -103,7 +103,7 @@ mod tests {
         let value = func.evaluate_at(&x);
         let descent_dir = gradient.mul(&(-1.0));
 
-        let cost = LineSearchFunc::new(&func, &descent_dir, &x).unwrap();
+        let cost = LineFunc::new(&func, &descent_dir, &x).unwrap();
     
         let solver = Backtracking::new(
             value,
