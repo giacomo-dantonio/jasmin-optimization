@@ -4,40 +4,46 @@ use serde::{Deserialize, Serialize};
 use crate::linesearch::{LineSearchFunc, backtracking::Backtracking};
 
 #[derive(Serialize, Deserialize)]
-pub struct SteepestDescent {
+pub struct Newton {
 }
 
-impl SteepestDescent {
+impl Newton {
     pub fn new() -> Self {
-        SteepestDescent {}
+        Newton {}
     }
 }
 
-impl<O, F> Solver<O> for SteepestDescent
+impl<O, F> Solver<O> for Newton
 where
     F: ArgminFloat,
     O: ArgminOp<Output = F, Float = F> + Clone,
     O::Param: ArgminScaledSub<O::Param, F, O::Param>
-        + ArgminScaledAdd<O::Param, F, O::Param>,
-    O::Param: ArgminMul<F, O::Param>
+        + ArgminScaledAdd<O::Param, F, O::Param>
+        + ArgminMul<F, O::Param>
         + ArgminDot<O::Param, F>
         + ArgminNorm<F>,
+    O::Hessian: ArgminInv<O::Hessian>
+        + ArgminDot<O::Param, O::Param>
 {
-    const NAME: &'static str = "Jasmin steepest descent";
+    const NAME: &'static str = "Jasmin newton";
 
     fn init(
         &mut self,
         op: &mut OpWrapper<O>,
         state: &IterState<O>,
     ) -> Result<Option<ArgminIterData<O>>, Error> {
+        // Compute initial cost, gradient and hessian and set the initial state
+
         let param = state.get_param();
         let initial_cost = op.apply(&param)?;
         let initial_grad = op.gradient(&param)?;
+        let initial_hessian = op.hessian(&param)?;
 
         let iter_data = ArgminIterData::<O>::new()
             .param(param)
             .cost(initial_cost)
-            .grad(initial_grad);
+            .grad(initial_grad)
+            .hessian(initial_hessian);
         Ok(Some(iter_data))
     }
 
@@ -52,7 +58,10 @@ where
             .as_ref()
             .ok_or(Error::msg("gradient unavailable"))?;
 
-        let descent_dir = gradient.mul(&F::from_f64(-1.0).unwrap());
+        let hessian = state.hessian
+            .as_ref()
+            .ok_or(Error::msg("hessian unavailable"))?;
+        let descent_dir = hessian.dot(gradient).mul(&F::from_f64(-1.0).unwrap());
 
         let line_cost_func = LineSearchFunc::new(
             op.clone(), descent_dir.clone(), param.clone())?;
@@ -76,12 +85,14 @@ where
         let next_param = param.scaled_add(&step_length, &descent_dir);
         let next_cost = op.apply(&next_param)?;
         let next_gradient = op.gradient(&next_param)?;
+        let next_hessian = op.hessian(&next_param)?;
 
         Ok(
             ArgminIterData::new()
             .param(next_param)
             .cost(next_cost)
             .grad(next_gradient)
+            .hessian(next_hessian)
         )
     }
 

@@ -2,8 +2,15 @@ use argmin::prelude::*;
 use nalgebra::{DMatrix, DVector};
 use jasmin_optimization::{
     functions::quadratic::Quadratic,
-    solvers::steepest_descent::SteepestDescent
+    solvers::steepest_descent::SteepestDescent,
+    solvers::newton::Newton
 };
+
+// TODO
+// - Implement interpolation strategies for the step length search
+// - Avoid duplicated code in line search methods (newton, gradient).
+//   Use traits for that.
+// - Create issue for ArgminDot which should not be a matrix - vector multiplication
 
 fn main() {
     let cost = Quadratic::new(
@@ -17,6 +24,7 @@ fn main() {
     );
 
     let solver = SteepestDescent::new();
+    // let solver = Newton::new();
     let res = Executor::new(
         cost,
         solver,

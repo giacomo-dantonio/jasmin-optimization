@@ -7,7 +7,7 @@ where
     O : ArgminOp
 {
     func: O,
-    gradient: O::Param,
+    descent_dir: O::Param,
     x: O::Param,
 }
 
@@ -16,13 +16,10 @@ where
     O : ArgminOp
 {
     // FIXME: avoid cloning the cost function and the parameter
-    // FIXME: use an arbitrary descent direction instead of -gradient
-    pub fn new(func: O, x: O::Param) -> Result<Self, Error> {
-        let gradient = func.gradient(&x)?;
-
+    pub fn new(func: O, descent_dir: O::Param, x: O::Param) -> Result<Self, Error> {
         Ok(LineSearchFunc {
             func,
-            gradient,
+            descent_dir,
             x
         })
     }
@@ -32,7 +29,7 @@ impl<O> ArgminOp for LineSearchFunc<O>
 where
     O : ArgminOp,
     O::Output : ArgminFloat,
-    O::Param : ArgminScaledSub<O::Param, O::Output, O::Param>,
+    O::Param : ArgminScaledAdd<O::Param, O::Output, O::Param>,
 {
     type Param = O::Output;
     type Output = O::Output;
@@ -41,7 +38,7 @@ where
     type Float = O::Output;
 
     fn apply(&self, param: &Self::Param) -> Result<Self::Output, Error> {
-        let x_next = self.x.scaled_sub(param, &self.gradient);
+        let x_next = self.x.scaled_add(param, &self.descent_dir);
         self.func.apply(&x_next)
     }
 }
