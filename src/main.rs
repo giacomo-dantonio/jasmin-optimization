@@ -8,8 +8,8 @@ use jasmin_optimization::{
 
 // TODO
 // - Implement interpolation strategies for the step length search
-// - Avoid duplicated code in line search methods (newton, gradient).
-//   Use traits for that.
+// - Implement netwon method with modifications
+// - Avoid computing the Hessian in the derive macro, if it's not needed.
 // - Create issue for ArgminDot which should not be a matrix - vector multiplication
 
 fn main() {
@@ -23,8 +23,8 @@ fn main() {
         0.0,
     );
 
-    // let solver = SteepestDescent::new();
-    let solver = Newton::new();
+    let solver = SteepestDescent::new();
+    // let solver = Newton::new();
     let res = Executor::new(
         cost,
         solver,

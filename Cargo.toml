@@ -7,7 +7,10 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-argmin = { features = ["ctrlc", "nalgebral"], path = "../argmin" }
+argmin = { features = ["ctrlc", "nalgebral"], path = "../../argmin" }
 nalgebra = { version = "0.22", features = ["serde-serialize"] }
 serde = "1.0"
 rand = "0.8"
+syn = "1.0"
+quote = "1.0"
+jasmin-macro-derive = { path = "../jasmin-macro-derive" }
