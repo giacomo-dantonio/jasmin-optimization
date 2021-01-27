@@ -13,4 +13,4 @@ serde = "1.0"
 rand = "0.8"
 syn = "1.0"
 quote = "1.0"
-jasmin-macro-derive = { path = "../jasmin-macro-derive" }
+linear-search-solver = { path = "subcrates/linear-search-solver" }

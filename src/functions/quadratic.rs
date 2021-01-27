@@ -20,6 +20,8 @@ impl Quadratic {
     }
 
     pub fn evaluate_at(&self, at: &DVector<f64>) -> f64 {
+        // FIXME: try a more efficient implementation using
+        // nalgebra
         0.5 *((&self.mat_q * at).transpose() * at)[(0,0)]
         + (&self.b.transpose() * at)[(0,0)]
         + self.c

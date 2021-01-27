@@ -11,6 +11,10 @@ use jasmin_optimization::{
 // - Implement netwon method with modifications
 // - Avoid computing the Hessian in the derive macro, if it's not needed.
 // - Create issue for ArgminDot which should not be a matrix - vector multiplication
+// - Add benchmarks for the implemented methods
+// - Test some more functions
+// - Add documentation
+// - Create github issues
 
 fn main() {
     let cost = Quadratic::new(

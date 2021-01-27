@@ -1,7 +1,7 @@
 use argmin::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use jasmin_macro_derive::Solver;
+use linear_search_solver::Solver;
 use crate::solvers::linesearch::LineSearch;
 use crate::steplength::{LineFunc, backtracking::Backtracking};
 
