@@ -7,6 +7,7 @@ use jasmin_optimization::{
 };
 
 // TODO
+// - Better initial step length for steepest descent
 // - Implement interpolation strategies for the step length search
 // - Implement netwon method with modifications
 // - Avoid computing the Hessian in the derive macro, if it's not needed.
@@ -27,8 +28,8 @@ fn main() {
         0.0,
     );
 
-    let solver = SteepestDescent::new();
-    // let solver = Newton::new();
+    // let solver = SteepestDescent::new();
+    let solver = Newton::new();
     let res = Executor::new(
         cost,
         solver,

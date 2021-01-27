@@ -58,29 +58,10 @@ fn impl_solver(ast: &syn::DeriveInput) -> TokenStream {
                 state: &IterState<O>,
             ) -> Result<ArgminIterData<O>, Error> {
                 let param = state.get_param();
-                let gradient = state.grad
-                    .as_ref()
-                    .ok_or(Error::msg("gradient unavailable"))?;
-        
+
                 let descent_dir = self.descent_dir(op, state)?;
-        
-                let line_cost_func = LineFunc::new(op, &descent_dir, &param)?;
-        
-                // FIXME: avoid magic numbers.
-                let linesearch = Backtracking::<F>::new::<O::Param>(
-                    state.cost,
-                    F::from_f64(0.7).unwrap(),
-                    F::from_f64(1E-4).unwrap(),
-                    gradient,
-                    &descent_dir,
-                );
-        
-                // FIXME: use a smart strategy for computing the initial step length.
-                let res = Executor::new(line_cost_func, linesearch, F::from_f64(1.0).unwrap())
-                .max_iters(10)
-                .run()?;
-        
-                let step_length = res.state.param;
+                let step_length = self.step_lengh(op, state, &descent_dir)?;
+
                 let next_param = param.scaled_add(&step_length, &descent_dir);
                 let next_cost = op.apply(&next_param)?;
                 let next_gradient = op.gradient(&next_param)?;
