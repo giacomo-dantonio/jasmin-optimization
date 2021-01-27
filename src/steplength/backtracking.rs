@@ -1,14 +1,49 @@
 use argmin::prelude::*;
 use argmin::prelude::ArgminDot;
-
 use serde::{Deserialize, Serialize};
+use crate::steplength::LineFunc;
 
 /// Implementation of the backtracking line search.
 /// Algorithm 3.1 of
 /// Jorge Nocedal and Stephen J. Wright (2006). Numerical Optimization.
 
+pub fn step_length<O, F>(
+    op: &mut OpWrapper<O>,
+    state: &IterState<O>, 
+    descent_dir: &O::Param,
+    initial_step_length: F
+) -> Result<F, Error>
+    where
+        F: ArgminFloat,
+        O: ArgminOp<Output = F, Float = F>,
+        O::Param: ArgminScaledAdd<O::Param, F, O::Param>
+            + ArgminDot<O::Param, F>
+{
+    let param = state.get_param();
+    let gradient = state.grad
+        .as_ref()
+        .ok_or(Error::msg("gradient unavailable"))?;
+
+    let line_cost_func = LineFunc::new(op, descent_dir, &param)?;
+    
+    // FIXME: avoid magic numbers.
+    let linesearch = Backtracking::<F>::new::<O::Param>(
+        state.cost,
+        F::from_f64(0.7).unwrap(),
+        F::from_f64(1E-4).unwrap(),
+        gradient,
+        &descent_dir,
+    );
+
+    let res = Executor::new(line_cost_func, linesearch, initial_step_length)
+    .max_iters(10)
+    .run()?;
+
+    Ok(res.state.param)
+}
+
 #[derive(Serialize, Deserialize)]
-pub struct Backtracking<F>
+struct Backtracking<F>
 {
     function_value: F,
     contraction_factor : F, // rho

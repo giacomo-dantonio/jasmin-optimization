@@ -2,8 +2,8 @@ use argmin::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use linear_search_solver::Solver;
+use crate::steplength::backtracking;
 use crate::solvers::linesearch::LineSearch;
-use crate::steplength::{LineFunc, backtracking::Backtracking};
 
 #[derive(Serialize, Deserialize, Solver)]
 pub struct SteepestDescent {
@@ -18,7 +18,7 @@ impl SteepestDescent {
 impl<O, F> LineSearch<O, F> for SteepestDescent
 where
     F: ArgminFloat,
-    O: ArgminOp<Output = F, Float = F> + Clone,
+    O: ArgminOp<Output = F, Float = F>,
     O::Param: ArgminScaledSub<O::Param, F, O::Param>
         + ArgminScaledAdd<O::Param, F, O::Param>
         + ArgminMul<F, O::Param>
@@ -39,31 +39,10 @@ where
         Ok(descent_dir)
     }
 
-    /// Backtracking step length search
-    fn step_lengh(&self, op: &mut OpWrapper<O>, state: &IterState<O>, descent_dir: &O::Param)
+    fn step_length(&self, op: &mut OpWrapper<O>, state: &IterState<O>, descent_dir: &O::Param)
         -> Result<O::Float, Error>
     {
-        let param = state.get_param();
-        let gradient = state.grad
-            .as_ref()
-            .ok_or(Error::msg("gradient unavailable"))?;
-
-        let line_cost_func = LineFunc::new(op, descent_dir, &param)?;
-        
-        // FIXME: avoid magic numbers.
-        let linesearch = Backtracking::<F>::new::<O::Param>(
-            state.cost,
-            F::from_f64(0.7).unwrap(),
-            F::from_f64(1E-4).unwrap(),
-            gradient,
-            &descent_dir,
-        );
-
         // FIXME: use a smart strategy for computing the initial step length.
-        let res = Executor::new(line_cost_func, linesearch, F::from_f64(1.0).unwrap())
-        .max_iters(10)
-        .run()?;
-
-        Ok(res.state.param)
+        backtracking::step_length(op, state, descent_dir, F::from_f64(1.0).unwrap())
     }
 }

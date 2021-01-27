@@ -60,7 +60,7 @@ fn impl_solver(ast: &syn::DeriveInput) -> TokenStream {
                 let param = state.get_param();
 
                 let descent_dir = self.descent_dir(op, state)?;
-                let step_length = self.step_lengh(op, state, &descent_dir)?;
+                let step_length = self.step_length(op, state, &descent_dir)?;
 
                 let next_param = param.scaled_add(&step_length, &descent_dir);
                 let next_cost = op.apply(&next_param)?;
