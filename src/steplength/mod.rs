@@ -2,6 +2,7 @@ use argmin::prelude::*;
 
 pub mod backtracking;
 
+#[derive(Clone)]
 pub struct LineFunc<'a, O>
 where
     O : ArgminOp

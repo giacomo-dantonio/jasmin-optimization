@@ -3,10 +3,12 @@ use nalgebra::{DMatrix, DVector};
 use jasmin_optimization::{
     functions::quadratic::Quadratic,
     solvers::steepest_descent::SteepestDescent,
-    solvers::newton::Newton
+    solvers::newton::Newton,
+    steplength::backtracking
 };
 
 // TODO
+// - Log out step length
 // - Better initial step length for steepest descent
 // - Implement interpolation strategies for the step length search
 // - Implement netwon method with modifications
@@ -18,6 +20,8 @@ use jasmin_optimization::{
 // - Create github issues
 
 fn main() {
+    backtracking::tests::test_cubic_interpolation();
+
     let cost = Quadratic::new(
         DMatrix::from_row_slice(3, 3, &[
             2f64, 1f64, 0f64,
