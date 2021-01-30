@@ -1,5 +1,7 @@
-use nalgebra::{ DMatrix, DVector };
+use nalgebra::{DMatrix, DVector};
 use argmin::prelude::*;
+
+use crate::functions::Function;
 
 /// Multivariate quadratic function of the form
 /// 0.5 x^T Q x + b^T x + c
@@ -51,6 +53,8 @@ impl ArgminOp for Quadratic {
         Ok(self.mat_q.clone())
     }
 }
+
+impl Function for Quadratic {}
 
 #[cfg(test)]
 mod tests {

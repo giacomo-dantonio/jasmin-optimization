@@ -13,4 +13,6 @@ serde = "1.0"
 rand = "0.8"
 syn = "1.0"
 quote = "1.0"
+structopt = "0.3"
+
 linear-search-solver = { path = "subcrates/linear-search-solver" }
