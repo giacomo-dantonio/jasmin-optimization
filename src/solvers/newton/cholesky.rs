@@ -1,5 +1,3 @@
-use std::f64::NEG_INFINITY;
-
 use argmin::prelude::Error;
 use nalgebra::{DMatrix, DVector};
 
@@ -8,7 +6,7 @@ static TOLERANCE : f64 = 1E-5;
 
 /// Cholesky LDL factorization, for the moment without modifications
 // (Algorithm 3.4 at page 53).
-fn factorization(mat_a: &DMatrix<f64>, delta: f64, beta: f64) -> Result<(DMatrix<f64>, DVector<f64>), Error>
+pub fn factorization(mat_a: &DMatrix<f64>, delta: f64, beta: f64) -> Result<(DMatrix<f64>, DVector<f64>), Error>
 {
     let (rows, cols) = mat_a.shape();
 
@@ -57,8 +55,24 @@ fn factorization(mat_a: &DMatrix<f64>, delta: f64, beta: f64) -> Result<(DMatrix
     Ok((mat_l, mat_d))
 }
 
+// Solve the linear system LDL^T * x = b from the Cholesky decomposition
+pub fn solve(mat_l: &DMatrix<f64>, d: &DVector<f64>, b: &DVector<f64>) -> Result<DVector<f64>, Error> {
+    let mat_lt = mat_l.transpose();
+
+    let x = mat_l.solve_lower_triangular(b)
+        .ok_or(Error::msg("Cannot solve the cholesky system."))?;
+    let x = x.component_div(d);
+    let x = mat_lt.solve_upper_triangular(&x)
+        .ok_or(Error::msg("Cannot solve the cholesky system."))?;
+
+    Ok(x)
+}
+
+
 #[cfg(test)]
 mod tests {
+    use argmin::{prelude::ArgminMul, solver};
+
     use super::*;
 
     fn is_positive_definite(mat: &DMatrix<f64>) -> bool {
@@ -77,11 +91,9 @@ mod tests {
         let mat_d = DMatrix::from_diagonal(&vec_d);
 
         let mat_l_t = mat_l.transpose();
-        let actual = mat_l * mat_d * mat_l_t;
-        // let actual = mat_l_t * mat_d * mat_l;
-        for entry in (actual - mat_a).iter() {
-            assert!(entry.abs() < TOLERANCE);
-        }
+        let check = mat_l * mat_d * mat_l_t;
+
+        assert_eq!(check, mat_a);
     }
 
     #[test]
@@ -99,5 +111,21 @@ mod tests {
         let mat_l_t = mat_l.transpose();
         let corrected = mat_l * mat_d * mat_l_t;
         assert!(is_positive_definite(&corrected));
+    }
+
+    #[test]
+    fn test_solve() {
+        let mat_a = DMatrix::from_row_slice(3, 3, &[
+            2f64, 1f64, 0f64,
+            1f64, 2f64, 0f64,
+            0f64, 0f64, 1f64
+        ]);
+
+        let (mat_l, vec_d) = factorization(&mat_a, 1E-4, 10.0).unwrap();
+
+        let b = DVector::from_row_slice(&[12.0, -7.0, 23.0]);
+        let x = solve(&mat_l, &vec_d, &b).unwrap();
+
+        assert!((mat_a * x - b).norm() < TOLERANCE);
     }
 }

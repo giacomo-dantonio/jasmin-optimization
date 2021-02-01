@@ -6,6 +6,7 @@ use jasmin_optimization::{
     functions::rosenbrock::Rosenbrock2D,
     solvers::steepest_descent::SteepestDescent,
     solvers::newton::Newton,
+    solvers::newton::NewtonWithModifications
 };
 
 // TODO
@@ -34,6 +35,9 @@ macro_rules! solve {
     ($cost:expr, $solver:expr, $x0:expr) => {
         let res = if $solver == "newton" {
             $cost.solve(Newton::new(), $x0)
+        }
+        else if $solver == "modified" {
+            $cost.solve(NewtonWithModifications::new(), $x0)
         }
         else
         {

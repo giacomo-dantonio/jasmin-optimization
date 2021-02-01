@@ -1,32 +1,34 @@
 use argmin::prelude::*;
+use nalgebra::{DMatrix, DVector};
 use serde::{Deserialize, Serialize};
 
-use linear_search_solver::Solver;
+use linear_search_solver::Solverf64;
 use crate::steplength::backtracking;
 use crate::solvers::linesearch::LineSearch;
 
-mod cholesky;
+use super::cholesky;
 
-#[derive(Serialize, Deserialize, Solver)]
-pub struct Newton {
+static DELTA : f64 = 1E-4;
+static BETA : f64 = 100.0;
+
+#[derive(Serialize, Deserialize, Solverf64)]
+pub struct NewtonWithModifications {
 }
 
-impl Newton {
+impl NewtonWithModifications {
     pub fn new() -> Self {
-        Newton {}
+        NewtonWithModifications {}
     }
 }
 
-impl<O, F> LineSearch<O, F> for Newton
+impl<O> LineSearch<O, f64> for NewtonWithModifications
 where
-    F: ArgminFloat,
-    O: ArgminOp<Output = F, Float = F>,
-    O::Param: ArgminScaledSub<O::Param, F, O::Param>
-        + ArgminScaledAdd<O::Param, F, O::Param>
-        + ArgminMul<F, O::Param>
-        + ArgminDot<O::Param, F>,
-    O::Hessian: ArgminInv<O::Hessian>
-        + ArgminDot<O::Param, O::Param>
+    O: ArgminOp<
+        Output = f64,
+        Float = f64,
+        Param = DVector<f64>,
+        Hessian = DMatrix<f64>
+    >
 {
     fn descent_dir(
         &self,
@@ -41,17 +43,16 @@ where
             .as_ref()
             .ok_or(Error::msg("hessian unavailable"))?;
 
-        // FIXME: avoid inverting the hessian, solve the linear system instead.
-        Ok(hessian
-            .inv()?
-            .dot(gradient)
-            .mul(&F::from_f64(-1.0).unwrap()))
+        let (mat_l, vec_d) = cholesky::factorization(&hessian, DELTA, BETA)?;
+        let descent_dir = cholesky::solve(&mat_l, &vec_d, &(-gradient))?;
+
+        Ok(descent_dir)
     }
 
     fn step_length(&self, op: &mut OpWrapper<O>, state: &IterState<O>, descent_dir: &O::Param)
         -> Result<O::Float, Error>
     {
         // The initial step length 1 is fine for newton's methods
-        backtracking::step_length(op, state, descent_dir, F::from_f64(1.0).unwrap())
+        backtracking::step_length(op, state, descent_dir, 1.0)
     }
 }
