@@ -5,6 +5,8 @@ use linear_search_solver::Solver;
 use crate::steplength::backtracking;
 use crate::solvers::linesearch::LineSearch;
 
+mod cholesky;
+
 #[derive(Serialize, Deserialize, Solver)]
 pub struct Newton {
 }
