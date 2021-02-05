@@ -71,8 +71,6 @@ pub fn solve(mat_l: &DMatrix<f64>, d: &DVector<f64>, b: &DVector<f64>) -> Result
 
 #[cfg(test)]
 mod tests {
-    use argmin::{prelude::ArgminMul, solver};
-
     use super::*;
 
     fn is_positive_definite(mat: &DMatrix<f64>) -> bool {
