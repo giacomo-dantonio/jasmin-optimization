@@ -167,8 +167,7 @@ mod tests {
     #[test]
     fn test_wolfe() {
         let func = Rosenbrock2D::new(1.0, 100.0);
-        // let param = DVector::from_row_slice(&[-1.2, 1.0]);
-        let param = DVector::from_row_slice(&[2.0, 2.0]);
+        let param = DVector::from_row_slice(&[-1.2, 1.0]);
 
         // Newton's method
         let gradient = func.gradient(&param).unwrap();
