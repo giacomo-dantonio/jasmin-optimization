@@ -17,6 +17,7 @@ where
     O::Param: ArgminScaledAdd<O::Param, F, O::Param>
         + ArgminDot<O::Param, F>
 {
+    max_iterations: u32,
     function_value: F,
     c1: F,
     c2: F,
@@ -28,7 +29,8 @@ pub fn step_length<O, F>(
     op: &mut OpWrapper<O>,
     state: &IterState<O>, 
     descent_dir: &O::Param,
-    initial_step_length: F
+    initial_step_length: F,
+    max_iterations: u32
 ) -> Result<F, Error>
     where
         F: ArgminFloat,
@@ -50,6 +52,7 @@ pub fn step_length<O, F>(
         F::from_f64(C2).unwrap(),
         gradient,
         &descent_dir,
+        max_iterations
     );
 
     let max = F::from_f64(10.0).unwrap();
@@ -72,7 +75,8 @@ where
         c1: F,
         c2: F,
         gradient: &O::Param,
-        descent_dir: &O::Param) -> Self
+        descent_dir: &O::Param,
+        max_iterations: u32) -> Self
     {
         let slope = gradient.dot(&descent_dir);
 
@@ -82,6 +86,7 @@ where
             c1,
             c2,
             slope,
+            max_iterations
         }
     }
 
@@ -94,7 +99,8 @@ where
         let mut prev_value = self.function_value;
         let mut step_length = initial;
 
-        loop {
+        let mut iteration = 0;
+        while iteration < self.max_iterations {
             let value = self.linefunc.apply(&step_length)?;
 
             if !self.sufficient_decrease(value, step_length)
@@ -114,7 +120,12 @@ where
             prev_step = step_length;
             prev_value = value;
             step_length = (step_length + max_step) / two;
+
+            iteration += 1;
         }
+
+        // This happens when the max_iterations have been reached
+        Ok(step_length)
     }
 
     fn zoom(&self, param_low: F, value_low: F, param_high: F, _value_high:F) -> Result<F, Error>
@@ -125,7 +136,8 @@ where
         let mut param_low = param_low;
         let mut param_high = param_high;
 
-        loop {
+        let mut iteration = 0;
+        while iteration < self.max_iterations {
             let param_trial = (param_low + param_high) / two;
             let value_trial = self.linefunc.apply(&param_trial)?;
 
@@ -145,7 +157,11 @@ where
                 }
                 param_low = param_trial;
             }
+
+            iteration += 1;
         }
+
+        Ok((param_low + param_high) / two)
     }
 
     fn sufficient_decrease(&self, value: F, step_length: F) -> bool {
@@ -171,7 +187,8 @@ mod tests {
 
         // Newton's method
         let gradient = func.gradient(&param).unwrap();
-        let descent_dir = -func.hessian(&param).unwrap() * gradient.clone();
+        let hessian_inv = func.hessian(&param).unwrap().inv().unwrap();
+        let descent_dir = -hessian_inv * gradient.clone();
 
         let line_cost_func = LineFunc::new(&func, &descent_dir, &param).unwrap();
         let cost = line_cost_func.apply(&0.0).unwrap();
@@ -183,6 +200,7 @@ mod tests {
             C2,
             &gradient,
             &descent_dir,
+            100
         );
 
         let step_length = linesearch.search(1.0, 10.0).unwrap();
