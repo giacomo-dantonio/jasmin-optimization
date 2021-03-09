@@ -27,7 +27,7 @@ where
         + ArgminDot<O::Param, O::Param>
 {
     fn descent_dir(
-        &self,
+        &mut self,
         _op: &mut OpWrapper<O>,
         state: &IterState<O>
     ) -> Result<O::Param, Error> {

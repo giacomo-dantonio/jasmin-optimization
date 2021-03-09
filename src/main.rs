@@ -1,3 +1,4 @@
+use argmin::prelude::*;
 use structopt::StructOpt;
 use nalgebra::{DMatrix, DVector};
 use jasmin_optimization::{
@@ -6,22 +7,19 @@ use jasmin_optimization::{
     functions::rosenbrock::Rosenbrock2D,
     solvers::steepest_descent::SteepestDescent,
     solvers::newton::Newton,
-    solvers::newton::NewtonWithModifications
+    solvers::newton::NewtonWithModifications,
+    solvers::quasinewton::Bfgs
 };
 
 // TODO
 // - Log out step length
 // - Fixme allow backtracking contraction factor, for better convergence
 //   (test on stepeest descent + Rosenbrock)
-// - Implement netwon method with modifications
-// - Do not invert the Hessian in the newton method, solve the linear system instead
-// - Program BFGS with the step length algorithm for the strong wolfe condition.
 // - Avoid computing the Hessian in the derive macro, if it's not needed.
 // - Create issue for ArgminDot which should not be a matrix - vector multiplication
 // - Add benchmarks for the implemented methods
 // - Test some more functions
 // - Add documentation
-// - Create github issues
 // - Better initial step length for steepest descent
 
 #[derive(Debug, StructOpt)]
@@ -38,6 +36,10 @@ macro_rules! solve {
         }
         else if $solver == "modified" {
             $cost.solve(NewtonWithModifications::new(), $x0)
+        }
+        else if $solver == "bfgs" {
+            let hessian = $cost.hessian(&$x0).unwrap();
+            $cost.solve(Bfgs::new(&hessian).unwrap(), $x0)
         }
         else
         {

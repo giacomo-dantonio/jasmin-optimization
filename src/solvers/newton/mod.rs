@@ -1,4 +1,4 @@
-mod cholesky;
+pub mod cholesky;
 mod simple;
 mod modified;
 

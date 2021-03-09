@@ -2,7 +2,7 @@ use argmin::prelude::*;
 use argmin::prelude::ArgminDot;
 use serde::{Deserialize, Serialize};
 
-use crate::steplength::LineFunc;
+use crate::steplength::{interpolation, LineFunc};
 
 /// Implementation of the backtracking line search.
 /// Algorithm 3.1 of
@@ -87,25 +87,16 @@ where
     }
 
 
-    /// Quadratic interpolation of the first two function values and
-    /// the derivate at 0.
-    /// see page 58.
+    /// Quadratic interpolation as in page 58.
     fn quadratic_interpolation(&self, current_step_length: F, current_value: F)
         -> Result<F, Error>
     {
-        let a = (
-            current_value
-            - self.function_value
-            - current_step_length * self.slope
-        ) / current_step_length.powi(2);
-        let b = self.slope;
-
-        if a > F::from_f64(1E-5).unwrap() {
-            Ok (-b / (F::from_f64(2.0).unwrap() * a))
-        }
-        else {
-            Err(Error::msg("Unable to compute quadratic interpolation"))
-        }
+        interpolation::quadratic(
+            self.function_value,
+            self.slope,
+            current_step_length,
+             current_value
+        )
     }
 
     /// Cubic interpolation as in page 58.
@@ -115,35 +106,13 @@ where
         current_step_length: F, current_value: F
     ) -> Result<F, Error>
     {
-        let function_value = self.function_value;
-        let slope = self.slope;
-        let det = previous_step_length.powi(2)
-            * current_step_length.powi(2)
-            * (current_step_length - previous_step_length);
-
-        if det < F::from_f64(1E-5).unwrap() {
-            return Err(Error::msg("Unable to compute cubic interpolation"));
-        }
-
-        let a = (
-            previous_step_length.powi(2) * (current_value - function_value - slope * current_step_length)
-            - current_step_length.powi(2) * (previous_value - function_value - slope * previous_step_length)
-        ) / det;
-
-        let b = (
-            - previous_step_length.powi(3) * (current_value - function_value - slope * current_step_length)
-            + current_step_length.powi(3) * (previous_value - function_value - slope * previous_step_length)
-        ) / det;
-
-        if a < F::from_f64(1E-5).unwrap() {
-            return Err(Error::msg("Unable to compute cubic interpolation"));
-        }
-
-        let three = F::from_f64(3.0).unwrap();
-        let next_step_length =
-            ((b.powi(2) - three * a * slope).sqrt() - b) / (three * a);
-
-        Ok(next_step_length)
+        interpolation::cubic(
+            self.function_value,
+            self.slope,
+            previous_step_length,
+            previous_value,
+            current_step_length,
+            current_value)
     }
 }
 
@@ -316,6 +285,7 @@ mod tests {
         }));
     }
 
+    // FIXME: move this test to interpolation.rs
     #[test]
     fn test_quadratic_interpolation() {
         TestData::test(Box::new(|data| {
@@ -339,6 +309,7 @@ mod tests {
         }));
     }
 
+    // FIXME: move this test to interpolation.rs
     #[test]
     pub fn test_cubic_interpolation() {
         let func = Rosenbrock2D::new(1.0, 100.0);
