@@ -8,7 +8,8 @@ use jasmin_optimization::{
     solvers::steepest_descent::SteepestDescent,
     solvers::newton::Newton,
     solvers::newton::NewtonWithModifications,
-    solvers::quasinewton::Bfgs
+    solvers::quasinewton::Bfgs,
+    solvers::newton::NewtonDogleg,
 };
 
 // TODO
@@ -40,6 +41,9 @@ macro_rules! solve {
         else if $solver == "bfgs" {
             let hessian = $cost.hessian(&$x0).unwrap();
             $cost.solve(Bfgs::new(&hessian).unwrap(), $x0)
+        }
+        else if $solver == "dogleg" {
+            $cost.solve(NewtonDogleg::new(10.0), $x0)
         }
         else
         {

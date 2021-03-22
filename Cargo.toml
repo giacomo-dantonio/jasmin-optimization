@@ -16,3 +16,4 @@ quote = "1.0"
 structopt = "0.3"
 
 linear-search-solver = { path = "subcrates/linear-search-solver" }
+trust-region-solver = { path = "subcrates/trust-region-solver" }
