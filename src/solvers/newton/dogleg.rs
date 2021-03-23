@@ -64,17 +64,22 @@ where
         else {
             let (mat_l, vec_d) = cholesky::factorization(&hessian, CHOL_DELTA, CHOL_BETA)?;
             let param_b = cholesky::solve(&mat_l, &vec_d, &(-grad))?;
-            let p_bu = &param_b - &param_u;
-    
-            // nu == tau - 1
-            let (_, nu) = solve_quadratic(
-                p_bu.norm_squared(),
-                param_u.dot(&p_bu),
-                // (&param_u * &p_bu)[(0, 0)],
-                &param_u.norm_squared() - delta.powi(2)
-            ).ok_or(Error::msg("Cannot compute step length."))?;
 
-            Ok(&param_u + nu * &p_bu)
+            if param_b.norm() > delta {
+                let p_bu = &param_b - &param_u;
+    
+                // nu == tau - 1
+                let (_, nu) = solve_quadratic(
+                    p_bu.norm_squared(),
+                    param_u.dot(&p_bu),
+                    &param_u.norm_squared() - delta.powi(2)
+                ).ok_or(Error::msg("Cannot compute step length."))?;
+    
+                Ok(&param_u + nu * &p_bu)
+            }
+            else {
+                Ok(param_b)
+            }
         }
     }
 
@@ -87,8 +92,8 @@ where
             .as_ref()
             .ok_or(Error::msg("hessian not available."))?;
 
-        let value = 0.5 *((hessian * param).transpose() * param)[(0,0)]
-            + (grad.transpose() * param)[(0,0)]
+        let value = 0.5 * (hessian * param).dot(param)
+            + grad.dot(param)
             + state.cost;
 
         Ok(value)

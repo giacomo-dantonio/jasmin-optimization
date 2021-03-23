@@ -47,14 +47,12 @@ pub fn impl_solver(ast: &syn::DeriveInput) -> TokenStream {
                 op: &mut OpWrapper<O>,
                 state: &IterState<O>,
             ) -> Result<ArgminIterData<O>, Error> {
-                // FIXME: should solve_subproblem also return
-                // the next_cost nad the subproblem_cost?
-                let mut next_param = self.solve_subproblem(op, state, self.delta)?;
+                let descent_dir = self.solve_subproblem(op, state, self.delta)?;
+                let mut next_param = &state.param + &descent_dir;
                 let mut next_cost = op.apply(&next_param)?;
 
-                let subproblem_cost = self.subproblem(state, &next_param)?;
+                let subproblem_cost = self.subproblem(state, &descent_dir)?;
                 let rho = (state.cost - next_cost) / (state.cost - subproblem_cost);
-                // assert!(rho > 0.0);
 
                 // update the trust region radius
                 if (rho < 0.25)
@@ -65,7 +63,7 @@ pub fn impl_solver(ast: &syn::DeriveInput) -> TokenStream {
                 {
                     if (rho > 0.75 && (rho.norm() - self.delta).abs() < 1E-5)
                     {
-                        self.delta = MAX_DELTA.min(2.0 * self.delta)
+                        self.delta = MAX_DELTA.min(2.0 * self.delta);
                     }
                 }
 
